@@ -1,0 +1,7 @@
+# The service worker and the page itself must always be fresh, so app updates reach phones.
+/sw.js
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache

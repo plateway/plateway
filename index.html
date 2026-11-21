@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Plateway" />
+    <meta name="description" content="Plan a day of vehicle delivery jobs: on-road routes, bus and train between jobs, and lift runs for several drivers." />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-180.png" />
+    <title>Plateway</title>
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: #0b0b0b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        transition: opacity 0.35s ease;
+      }
+      #splash.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash svg {
+        width: 112px;
+        height: 112px;
+      }
+      #splash b {
+        color: #fff;
+        font: 800 30px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        letter-spacing: -0.02em;
+      }
+      #splash .road {
+        stroke-dasharray: 700;
+        stroke-dashoffset: 700;
+        animation: splash-road 0.7s 0.1s ease-out forwards;
+      }
+      #splash .end {
+        transform-origin: 724px 724px;
+        transform: scale(0);
+        animation: splash-end 0.3s 0.7s ease-out forwards;
+      }
+      @keyframes splash-road {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes splash-end {
+        to {
+          transform: scale(1);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #splash {
+          transition: none;
+        }
+        #splash .road,
+        #splash .end {
+          animation: none;
+          stroke-dashoffset: 0;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="splash" role="img" aria-label="Plateway">
+      <svg viewBox="150 150 724 724" aria-hidden="true">
+        <path class="road" d="M300 300C300 590 724 434 724 724" fill="none" stroke="#fff" stroke-width="96" stroke-linecap="round" />
+        <circle cx="300" cy="300" r="78" fill="#0b0b0b" stroke="#fff" stroke-width="48" />
+        <circle class="end" cx="724" cy="724" r="104" fill="#06c167" />
+      </svg>
+      <b>Plateway</b>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

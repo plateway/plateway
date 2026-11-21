@@ -1,0 +1,6 @@
+{
+  // Cloudflare Pages: serves the built app in dist/ as static files.
+  "name": "plateway",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-11-19"
+}
