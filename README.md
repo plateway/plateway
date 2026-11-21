@@ -60,7 +60,7 @@ All free, no keys. All are community services with fair-use limits and no uptime
 
 ## Contributing
 
-Problems and ideas are welcome as GitHub issues. Please do not post screenshots of real job sheets: they contain personal details.
+Problems and ideas are welcome at https://github.com/plateway/plateway/issues. Please do not post screenshots of real job sheets: they contain personal details.
 
 ## Licence
 
