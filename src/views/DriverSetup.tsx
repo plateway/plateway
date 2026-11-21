@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Icon, JobForm, RouteThumb, StartField, toast, Toggle } from '../components/bits';
+import { Icon, JobForm, RouteThumb, StartField, toast, Toggle, DayAndTime } from '../components/bits';
 import { driverGaps, type Places, type PlanState } from '../hooks';
 import { fareText } from '../lib/fares';
 import { money, payFor, totals } from '../lib/pay';
@@ -92,16 +92,7 @@ export function DriverSetup({ places, placesError, solo, lift, onImport }: Props
   return (
     <>
       <div className="pad">
-        <div className="day-row">
-          <label className="mini">
-            <span>Day</span>
-            <input type="date" value={day.date} onChange={(e) => e.target.value && setDriver({ date: e.target.value })} />
-          </label>
-          <label className="mini">
-            <span>Leave at</span>
-            <input type="time" value={day.leaveAt} onChange={(e) => e.target.value && setDriver({ leaveAt: e.target.value })} />
-          </label>
-        </div>
+        <DayAndTime date={day.date} leaveAt={day.leaveAt} onChange={setDriver} />
 
         <StartField label="Start from" value={day.start} onChange={(start) => setDriver({ start })} places={places} />
         <Toggle checked={day.homeSame} onChange={(homeSame) => setDriver({ homeSame })}>

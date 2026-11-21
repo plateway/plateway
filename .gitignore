@@ -8,3 +8,4 @@ playwright-report/
 .env*
 *.png.private
 shots/
+tsconfig.tsbuildinfo

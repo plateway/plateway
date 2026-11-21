@@ -5,6 +5,7 @@ import { nearestPostcode, normPostcode } from '../lib/postcodes';
 import type { Coords, Job, Place } from '../lib/types';
 import { uid, useStore, type StartPoint } from '../store';
 import type { Places } from '../hooks';
+import { nowLondon } from '../lib/time';
 
 /* ---------- icons ---------- */
 
@@ -78,6 +79,29 @@ const useToast = create<{ text: string | null; action?: ToastAction; id: number;
   hide: () => set({ text: null, action: undefined }),
 }));
 export const toast = (text: string, action?: ToastAction) => useToast.getState().show(text, action);
+
+/** The day and leave time, with a button that sets both to right now. */
+export function DayAndTime({ date, leaveAt, onChange }: { date: string; leaveAt: string; onChange: (patch: { date?: string; leaveAt?: string }) => void }) {
+  const now = nowLondon();
+  const isNow = date === now.date && leaveAt === now.time;
+  return (
+    <div className="day-row">
+      <label className="mini">
+        <span>Day</span>
+        <input type="date" value={date} onChange={(e) => e.target.value && onChange({ date: e.target.value })} />
+      </label>
+      <div className="mini">
+        <label className="mini">
+          <span>Leave at</span>
+          <input type="time" value={leaveAt} onChange={(e) => e.target.value && onChange({ leaveAt: e.target.value })} />
+        </label>
+        <button type="button" className="link leave-now" onClick={() => { const n = nowLondon(); onChange({ date: n.date, leaveAt: n.time }); }}>
+          {isNow ? 'Leaving now' : 'Leave now'}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function Toast() {
   const { text, action, hide } = useToast();

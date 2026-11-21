@@ -541,6 +541,21 @@ test('lift driver plans a run for three drivers', async ({ page, context }) => {
   await expect(page.locator('.drv')).toHaveCount(3);
 });
 
+test('leave now sets the day and time to right now, for both drivers', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-21T13:56:20Z'));
+  for (const role of ['Plate driver', 'Lift driver'] as const) {
+    await open(page, role);
+    await page.getByLabel('Leave at').fill('07:00');
+    await page.getByRole('button', { name: 'Leave now' }).click();
+    await expect(page.getByLabel('Leave at')).toHaveValue('13:56');
+    await expect(page.getByLabel('Day', { exact: true })).toHaveValue('2026-11-21');
+    await expect(page.getByRole('button', { name: 'Leaving now' })).toBeVisible();
+    await fitsScreen(page, `${role} leave now`);
+    await page.screenshot({ path: `test-results/leave-now-${role.split(' ')[0].toLowerCase()}-${page.viewportSize()!.width}.png` });
+    await page.evaluate(() => localStorage.clear());
+  }
+});
+
 test('bad input is explained in plain words', async ({ page }) => {
   await open(page);
   await page.getByLabel('Start from').fill('ZZ99 9ZZ');

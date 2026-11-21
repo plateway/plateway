@@ -39,6 +39,11 @@ export function todayLondon(now = Date.now()): string {
   return `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
 }
 
+/** The UK date and time right now, as the day and "leave at" fields hold them. */
+export function nowLondon(now = Date.now()): { date: string; time: string } {
+  return { date: todayLondon(now), time: fmtTime(now) };
+}
+
 export function addDays(date: string, days: number): string {
   const [y, m, d] = date.split('-').map(Number);
   const t = new Date(Date.UTC(y, m - 1, d + days));

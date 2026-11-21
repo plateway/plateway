@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Icon, JobForm, StartField, Toggle } from '../components/bits';
+import { Icon, JobForm, StartField, Toggle, DayAndTime } from '../components/bits';
 import { liftGaps, type Places } from '../hooks';
 import type { Job, TeamDriver } from '../lib/types';
 import { DRIVER_COLOURS, uid, useStore } from '../store';
@@ -34,16 +34,7 @@ export function LiftSetup({ places, placesError, onImport }: Props) {
         <p className="muted">
           {day.drivers.length ? `${day.drivers.length} driver${day.drivers.length > 1 ? 's' : ''} · ${jobCount} job${jobCount === 1 ? '' : 's'}` : 'Add each driver and their jobs. The run is planned so everyone gets through their day soonest.'}
         </p>
-        <div className="day-row">
-          <label className="mini">
-            <span>Day</span>
-            <input type="date" value={day.date} onChange={(e) => e.target.value && setLift({ date: e.target.value })} />
-          </label>
-          <label className="mini">
-            <span>Leave at</span>
-            <input type="time" value={day.leaveAt} onChange={(e) => e.target.value && setLift({ leaveAt: e.target.value })} />
-          </label>
-        </div>
+        <DayAndTime date={day.date} leaveAt={day.leaveAt} onChange={setLift} />
         <StartField label="Start from" value={day.start} onChange={(start) => setLift({ start })} places={places} />
         {placesError && <p className="hint bad">{placesError}</p>}
 
