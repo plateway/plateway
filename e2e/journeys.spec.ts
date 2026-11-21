@@ -407,6 +407,7 @@ test('the About page says what leaves the phone and credits the data', async ({ 
   await expect(about.getByRole('link', { name: 'these timetable sources' })).toHaveAttribute('href', 'https://transitous.org/sources/');
   await expect(about.getByRole('link', { name: 'Fix the map' })).toHaveAttribute('href', 'https://www.openstreetmap.org/fixthemap');
   await expect(about).toContainText('Open Government Licence');
+  await expect(about).toContainText('It sets no cookies');
   await fitsScreen(page, 'about');
   await shot(page, '62-about');
 });

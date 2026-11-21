@@ -56,6 +56,7 @@ All free, no keys. All are community services with fair-use limits and no uptime
 - A lift run assumes every driver starts in the car at the lift driver's start.
 - Bus fares use the published single fare cap for England (£3 to the end of 2026, £2 in 2027), set in `src/lib/fares.ts`; update it when the cap changes. Train fares are a rough range from distance, because no free source of real ticket prices exists.
 - Pay is worked out from the rates in the app, not taken from a payslip.
+- Visits are counted with Cloudflare Web Analytics, switched on for the Cloudflare Pages project (Workers & Pages → plateway → Metrics). It is cookie-free and needs no code; Cloudflare adds its counting script to pages it serves. The About page says so.
 - Planning needs a connection. The app opens offline but does not keep the last plan.
 
 ## Contributing

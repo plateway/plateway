@@ -46,6 +46,15 @@ export function AboutDialog() {
         </ul>
         <p>These are free services run by volunteers. They see the places asked about and your internet address, not your name. Nothing is sold or used for adverts.</p>
 
+        <h3>Counting visits</h3>
+        <p>
+          The app uses{' '}
+          <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener noreferrer">
+            Cloudflare Web Analytics
+          </a>{' '}
+          to count how many people use it. It sets no cookies, does not follow you across sites, and never sees your jobs, postcodes or location: only that a page was opened, roughly where from (country), and on what kind of device.
+        </p>
+
         <h3>Where the data comes from</h3>
         <ul>
           <li>
