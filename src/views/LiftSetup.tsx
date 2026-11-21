@@ -89,6 +89,12 @@ export function LiftSetup({ places, placesError, onImport }: Props) {
                 );
               })}
 
+              {d.jobs.length > 0 && !d.jobs.some((j) => j.carryover) && (
+                <Toggle checked={!d.ownWayHome} onChange={(pick) => patchDriver(d.id, { ownWayHome: !pick })}>
+                  Pick them up after their last job
+                </Toggle>
+              )}
+
               {adding === d.id ? (
                 <div className="jr editing">
                   <JobForm saveLabel="Add job" onCancel={() => setAdding(null)} onSave={(j) => (patchDriver(d.id, { jobs: withJob(d.jobs, j) }), setAdding(null))} />

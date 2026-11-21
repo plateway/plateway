@@ -12,6 +12,8 @@ export type LiftModel = {
   drivers: {
     /** `d` is null for a carryover: the driver keeps the car, so there is no pick-up. */
     jobs: { c: number; d: number | null; driveSecs: number }[];
+    /** No pick-up after this driver's last job: they make their own way home. */
+    ownWayHome?: boolean;
   }[];
   handoverSecs: number;
   /** Time the lift car spends stopped to let a driver out or in. */
@@ -55,7 +57,7 @@ export function solveLift(m: LiftModel): LiftSolution {
   const maxNodes = m.maxNodes ?? 400_000;
   const remaining = m.drivers.map((d) => (1 << d.jobs.length) - 1);
   const away: ({ job: number; ready: number; point: number } | null)[] = new Array(n).fill(null);
-  const endsInCar = m.drivers.map((d) => d.jobs.length > 0 && d.jobs.every((j) => j.d != null));
+  const endsInCar = m.drivers.map((d) => !d.ownWayHome && d.jobs.length > 0 && d.jobs.every((j) => j.d != null));
   const returns = m.returnToStart || endsInCar.some(Boolean);
 
   let best = null as LiftAction[] | null;
@@ -138,8 +140,9 @@ export function solveLift(m: LiftModel): LiftSolution {
       const job = m.drivers[d].jobs[o.job];
       path.push(o);
       if (o.kind === 'drop') {
+        const goesHomeAlone = !!m.drivers[d].ownWayHome && isLastJob(d, o.job);
         remaining[d] &= ~(1 << o.job);
-        if (job.d != null) away[d] = { job: o.job, ready: o.ready, point: job.d };
+        if (job.d != null && !goesHomeAlone) away[d] = { job: o.job, ready: o.ready, point: job.d };
         walk(job.c, o.depart, waited);
         away[d] = null;
         remaining[d] |= 1 << o.job;
@@ -213,7 +216,7 @@ export async function planLift(input: LiftInput, services: LiftServices = live):
   const solution = solveLift({
     secs: table.secs,
     start: 0,
-    drivers: resolved.map((r) => ({ jobs: r.jobs.map((j) => ({ c: j.ci, d: j.di, driveSecs: j.di == null ? 0 : table.secs[j.ci][j.di] })) })),
+    drivers: resolved.map((r) => ({ ownWayHome: !!r.driver.ownWayHome, jobs: r.jobs.map((j) => ({ c: j.ci, d: j.di, driveSecs: j.di == null ? 0 : table.secs[j.ci][j.di] })) })),
     handoverSecs,
     stopSecs: STOP_SECS,
     returnToStart: input.returnToStart,
@@ -277,6 +280,7 @@ export async function planLift(input: LiftInput, services: LiftServices = live):
         arriveAt: at(setOff + driveSecs),
         readyAt: at(a.ready),
         pickedAt: null,
+        ownWay: false,
         miles: road ? metresToMiles(road.metres) : 0,
         mins: driveSecs / 60,
         coords: road?.coords ?? [],
@@ -286,6 +290,9 @@ export async function planLift(input: LiftInput, services: LiftServices = live):
       if (lj) lj.pickedAt = at(Math.max(a.arrive, a.ready));
     }
   });
+
+  // A delivered job nobody came back for is the last job of a driver going home on their own.
+  for (const lane of laneJobs) for (const lj of lane) lj.ownWay = !lj.carryover && lj.pickedAt == null;
 
   const finish = at(solution.finish);
   if (solution.returns) {
@@ -308,6 +315,11 @@ export async function planLift(input: LiftInput, services: LiftServices = live):
       }
       segments.push({ kind: 'job', start: lj.setOffAt, end: lj.arriveAt, jobId: lj.jobId });
       segments.push({ kind: 'handover', start: lj.arriveAt, end: lj.readyAt, jobId: lj.jobId });
+      if (lj.ownWay) {
+        cursor = lj.readyAt;
+        end = lj.readyAt;
+        continue;
+      }
       const picked = lj.pickedAt ?? lj.readyAt;
       if (picked > lj.readyAt) {
         segments.push({ kind: 'wait', start: lj.readyAt, end: picked, jobId: lj.jobId });

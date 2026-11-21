@@ -146,7 +146,7 @@ export function useLiftPlan(day: LiftDay, places: Places, handoverMin: number, e
   const ready = enabled && !liftGaps(day, places);
   const start = resolveStart(day.start, places);
   const key = ready
-    ? JSON.stringify([day.date, day.leaveAt, start, day.returnToStart, day.keepJobOrder, handoverMin, day.drivers.map((d) => [d.id, d.jobs.map((j) => [j.id, j.collect, j.deliver, j.carryover])])])
+    ? JSON.stringify([day.date, day.leaveAt, start, day.returnToStart, day.keepJobOrder, handoverMin, day.drivers.map((d) => [d.id, !!d.ownWayHome, d.jobs.map((j) => [j.id, j.collect, j.deliver, j.carryover])])])
     : null;
   return useAsyncPlan<LiftPlan>(key, () =>
     planLift({

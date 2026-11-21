@@ -214,6 +214,7 @@ export function LiftResult({ state, drivers, colours, date, tab, onTab, selected
                               Waits {fmtDur((j.pickedAt - j.readyAt) / MIN)} at {j.to?.postcode} from {fmtTime(j.readyAt)}
                             </span>
                           )}
+                          {j.ownWay && <span className="waits">Makes own way home from {j.to?.postcode}</span>}
                         </>
                       )}
                     </p>

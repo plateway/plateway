@@ -96,7 +96,14 @@ export type DriverPlan = {
   fare?: import('./fares').FareEstimate;
 };
 
-export type TeamDriver = { id: string; callSign: string; name: string; jobs: Job[] };
+export type TeamDriver = {
+  id: string;
+  callSign: string;
+  name: string;
+  jobs: Job[];
+  /** True when the driver makes their own way home after their last job, so the lift car does not pick them up. */
+  ownWayHome?: boolean;
+};
 
 export type LiftStopKind = 'start' | 'drop' | 'pick' | 'end';
 
@@ -138,6 +145,8 @@ export type LaneJob = {
   arriveAt: number;
   readyAt: number;
   pickedAt: number | null;
+  /** True for the last job of a driver who makes their own way home from the delivery. */
+  ownWay: boolean;
   miles: number;
   mins: number;
   coords: Coords;

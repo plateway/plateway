@@ -1,3 +1,4 @@
+import { lanePlanText } from './share';
 import { describe, expect, it } from 'vitest';
 import { busCap, estimateFare, fareText, sumFares } from './fares';
 import { navLink } from './links';
@@ -154,6 +155,46 @@ describe('lift run', () => {
     expect(sol.proven).toBe(true);
     expect(sol.actions.map((a) => `${a.kind}${a.driver}`)).toEqual(['drop0', 'drop1', 'pick0', 'pick1']);
     expect(sol.returns).toBe(true);
+  });
+
+  it('does not go back for a driver who makes their own way home', () => {
+    const secs = [
+      [0, 600, 900, 4200],
+      [600, 0, 300, 3600],
+      [900, 300, 0, 3600],
+      [4200, 3600, 3600, 0],
+    ];
+    const base = { secs, start: 0, handoverSecs: 900, stopSecs: 120, returnToStart: true, keepJobOrder: false };
+    const both = solveLift({ ...base, drivers: [{ jobs: [{ c: 1, d: 3, driveSecs: 3600 }] }, { jobs: [{ c: 2, d: 3, driveSecs: 3600 }], ownWayHome: true }] });
+    expect(both.actions.map((a) => `${a.kind}${a.driver}`)).toEqual(['drop0', 'drop1', 'pick0']);
+    const alone = solveLift({ ...base, returnToStart: false, drivers: [{ jobs: [{ c: 1, d: 3, driveSecs: 3600 }], ownWayHome: true }] });
+    expect(alone.actions.map((a) => a.kind)).toEqual(['drop']);
+    expect(alone.returns).toBe(false);
+    expect(alone.finish).toBe(600 + 120);
+  });
+
+  it('shows a driver going home alone as done when their last job is', async () => {
+    const places = { S: P('S', 0, 0), A: P('A', 10, 0), B: P('B', 10, 30), C: P('C', 20, 0), D: P('D', 20, 30) };
+    const plan = await planLift(
+      {
+        start: places.S,
+        leaveMs: londonToEpoch('2026-11-23', '07:00'),
+        places,
+        handoverMin: 15,
+        returnToStart: true,
+        keepJobOrder: true,
+        drivers: [{ id: 'd1', callSign: 'AA111', name: '', ownWayHome: true, jobs: [job('1', 'A', 'B'), job('2', 'C', 'D')] }],
+      },
+      fake,
+    );
+    expect(plan.stops.map((s) => s.kind)).toEqual(['start', 'drop', 'pick', 'drop', 'end']);
+    const lane = plan.lanes[0];
+    expect(lane.jobs.map((j) => j.ownWay)).toEqual([false, true]);
+    expect(lane.finish).toBe(lane.jobs[1].readyAt);
+    expect(lane.segments[lane.segments.length - 1].kind).toBe('handover');
+    const text = lanePlanText({ id: 'd1', callSign: 'AA111', name: '', jobs: [] }, lane, plan, '2026-11-23');
+    expect(text).toContain('Make your own way home');
+    expect(text).not.toContain('Back at the start');
   });
 
   it('does not come back for a driver on a carryover', async () => {

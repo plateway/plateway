@@ -17,8 +17,10 @@ export function lanePlanText(driver: TeamDriver, lane: DriverLane, plan: LiftPla
       const wait = (j.pickedAt - j.readyAt) / 60_000;
       lines.push(`${fmtTime(j.pickedAt)} Picked up at ${j.to?.postcode}${wait >= 10 ? ` (about ${fmtDur(wait)} wait)` : ''}.`);
     }
+    if (j.ownWay) lines.push(`${fmtTime(j.readyAt)} Done at ${j.to?.postcode}. Make your own way home from there.`);
   }
-  if (lane.finish === plan.finish && !lane.jobs[lane.jobs.length - 1]?.carryover) lines.push(`${fmtTime(plan.finish)} Back at the start.`);
+  const last = lane.jobs[lane.jobs.length - 1];
+  if (last && !last.carryover && !last.ownWay) lines.push(`${fmtTime(plan.finish)} Back at the start.`);
   lines.push('Times are estimates from normal road speeds.');
   return lines.join('\n');
 }

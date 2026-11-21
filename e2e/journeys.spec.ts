@@ -541,6 +541,41 @@ test('lift driver plans a run for three drivers', async ({ page, context }) => {
   await expect(page.locator('.drv')).toHaveCount(3);
 });
 
+test('lift driver leaves a driver to make their own way home', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await open(page, 'Lift driver');
+  await setDay(page);
+  await page.getByLabel('Start from').fill('TS1 1EG');
+  for (const [i, [sign, c, d]] of [['AB123', 'TS17 0EY', 'NE37 3HT'], ['MK214', 'TS15 9ZS', 'DL1 4AA']].entries()) {
+    await page.getByRole('button', { name: 'Add a driver' }).click();
+    const card = page.locator('.drv').nth(i);
+    await card.getByLabel(`Call sign for driver ${i + 1}`).fill(sign);
+    await addJob(page, card, c, d, '', '+ Add job');
+  }
+  const second = page.locator('.drv').nth(1);
+  const pickUp = second.getByLabel('Pick them up after their last job');
+  await expect(pickUp).toBeChecked();
+  await pickUp.uncheck();
+  await expect(pickUp).not.toBeChecked();
+  await fitsScreen(page, 'own way home');
+  await shot(page, '24-own-way-home-setup');
+
+  await page.getByRole('button', { name: 'Plan the run' }).click();
+  const stops = page.locator('.stops-list > li');
+  await expect(stops.last()).toContainText('Back at the start');
+  // Two drops and one pick-up: nobody goes back for MK214.
+  await expect(stops.filter({ hasText: 'Pick up' })).toHaveCount(1);
+  await expect(stops.filter({ hasText: 'Pick up MK214' })).toHaveCount(0);
+  if (test.info().project.name === 'phone') await page.getByRole('button', { name: 'Show the full plan' }).click();
+  await page.getByRole('group', { name: 'What to show' }).getByRole('button', { name: 'Drivers' }).click();
+  await expect(page.locator('.lanes > li').nth(1)).toContainText('Makes own way home from DL1 4AA');
+  await fitsScreen(page, 'own way home, drivers');
+  await shot(page, '25-own-way-home-drivers');
+  await page.locator('.lanes > li').nth(1).getByRole('button', { name: 'Send plan' }).click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText()).catch(() => '');
+  if (copied) expect(copied).toContain('Make your own way home from there.');
+});
+
 test('leave now sets the day and time to right now, for both drivers', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-11-21T13:56:20Z'));
   for (const role of ['Plate driver', 'Lift driver'] as const) {
