@@ -64,6 +64,12 @@ type State = {
   /** Replaces the plate driver's jobs and rates with a backup. */
   restoreBackup: (backup: Backup) => void;
   addTeamJobs: (driverId: string, jobs: Job[], who?: { callSign?: string; name?: string }) => void;
+  /**
+   * Moves a day left on a past date to today, so the planner opens fresh each morning.
+   * Days planned ahead are left alone. The lift team is kept, but last time's jobs are cleared.
+   * Returns null when nothing changed, else what changed and how to undo it.
+   */
+  startNewDay: (today: string) => { liftJobsCleared: number; driverJobsBefore: number; undo: () => void } | null;
 };
 
 const emptyStart = (): StartPoint => ({ postcode: '', place: null });
@@ -141,6 +147,23 @@ export const useStore = create<State>()(
         }));
         // Undo puts back exactly what was there, in the same place.
         return () => set((s) => ({ driver: { ...s.driver, jobs: before.map((j) => s.driver.jobs.find((x) => x.id === j.id) ?? j).concat(s.driver.jobs.filter((x) => !before.some((j) => j.id === x.id))) } }));
+      },
+      startNewDay: (today) => {
+        const { driver, lift, view } = get();
+        const driverOld = driver.date < today;
+        const liftOld = lift.date < today;
+        if (!driverOld && !liftOld) return null;
+        const liftJobsCleared = liftOld ? lift.drivers.reduce((n, d) => n + d.jobs.length, 0) : 0;
+        set((s) => ({
+          driver: driverOld ? { ...s.driver, date: today } : s.driver,
+          lift: liftOld ? { ...s.lift, date: today, drivers: s.lift.drivers.map((d) => ({ ...d, jobs: [], ownWayHome: false })) } : s.lift,
+          view: view === 'result' ? 'setup' : view,
+        }));
+        return {
+          liftJobsCleared,
+          driverJobsBefore: driverOld ? driver.jobs.filter((j) => j.date === driver.date).length : 0,
+          undo: () => set((s) => ({ driver: driverOld ? { ...s.driver, date: driver.date } : s.driver, lift: liftOld ? lift : s.lift })),
+        };
       },
       addTeamJobs: (driverId, jobs, who) =>
         set((s) => ({

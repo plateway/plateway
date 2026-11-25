@@ -7,7 +7,7 @@ import { InstallCard } from './components/InstallCard';
 import { MapView } from './components/MapView';
 import { resolveStart, useDriverPlan, useIsPhone, useLiftPlan, usePlaces } from './hooks';
 import { dayOf } from './store';
-import { fmtDate } from './lib/time';
+import { fmtDate, todayLondon } from './lib/time';
 import type { Coords } from './lib/types';
 import { driverMap, legCoords, liftMap } from './mapData';
 import { DRIVER_COLOURS, useStore } from './store';
@@ -48,6 +48,25 @@ export function App() {
       if (job && job.roadMiles !== miles) updateJob(job.id, { roadMiles: miles });
     }
   }, [dayPlan.plan]);
+
+  // A planner left on yesterday opens on today, ready for a fresh day. Checked on opening and whenever the app comes back to the front.
+  useEffect(() => {
+    const check = () => {
+      if (document.visibilityState === 'hidden') return;
+      const changed = useStore.getState().startNewDay(todayLondon());
+      if (!changed) return;
+      const { role: now, liftJobsCleared: cleared, driverJobsBefore: before } = { ...useStore.getState(), ...changed };
+      if (now === 'lift' && cleared) toast(`New day. Your drivers are kept; last run's ${cleared === 1 ? 'job was' : `${cleared} jobs were`} cleared.`, { label: 'Undo', run: changed.undo });
+      else if (now === 'driver' && before) toast('New day. Earlier jobs are in History and pay.', { label: 'Undo', run: changed.undo });
+    };
+    check();
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    return () => {
+      document.removeEventListener('visibilitychange', check);
+      window.removeEventListener('focus', check);
+    };
+  }, []);
 
   const colours = useMemo(() => Object.fromEntries(lift.drivers.map((d, i) => [d.id, DRIVER_COLOURS[i % DRIVER_COLOURS.length]])), [lift.drivers]);
   const driverStart = resolveStart(driver.start, places);

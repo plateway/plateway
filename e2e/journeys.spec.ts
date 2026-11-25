@@ -576,6 +576,56 @@ test('lift driver leaves a driver to make their own way home', async ({ page, co
   if (copied) expect(copied).toContain('Make your own way home from there.');
 });
 
+test('the next morning the planner opens on a fresh day, for both drivers', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-23T18:00:00Z'));
+  await open(page);
+  await page.getByLabel('Start from').fill('TS1 1EG');
+  await addJob(page, page, 'TS17 0EY', 'NE37 3HT');
+  await page.getByRole('button', { name: 'Add a job by postcode' }).click();
+  await page.getByLabel('Collect from').fill('TS15 9ZS');
+  await page.getByLabel('Carryover: the car goes home tonight').check();
+  await page.getByRole('button', { name: 'Add job', exact: true }).click();
+  await expect(page.locator('.jobs > li')).toHaveCount(2);
+
+  // Overnight: the app is opened again the next morning.
+  await page.clock.setFixedTime(new Date('2026-11-24T06:30:00Z'));
+  await page.reload();
+  await expect(page.getByLabel('Day', { exact: true })).toHaveValue('2026-11-24');
+  await expect(page.locator('.jobs > li')).toHaveCount(0);
+  await expect(page.getByText('New day. Earlier jobs are in History and pay.')).toBeVisible();
+  await expect(page.getByText(/You took .* home on Mon/)).toBeVisible();
+  await expect(page.getByLabel('Start from')).toHaveValue('TS1 1EG');
+  await fitsScreen(page, 'new day');
+  await shot(page, '56-new-day');
+  await page.getByRole('group', { name: 'Section' }).getByRole('button', { name: 'History and pay' }).click();
+  await expect(page.locator('.hday')).toHaveCount(1);
+
+  // A day planned ahead is left alone.
+  await page.getByRole('group', { name: 'Section' }).getByRole('button', { name: 'Plan' }).click();
+  await page.getByLabel('Day', { exact: true }).fill('2026-11-26');
+  await page.reload();
+  await expect(page.getByLabel('Day', { exact: true })).toHaveValue('2026-11-26');
+
+  // Lift driver: the team stays, last run's jobs go, and Undo brings them back.
+  await page.clock.setFixedTime(new Date('2026-11-24T07:00:00Z'));
+  await page.getByRole('button', { name: 'Switch' }).click();
+  await page.getByRole('button', { name: /^Lift driver/ }).click();
+  await page.getByRole('button', { name: 'Add a driver' }).click();
+  const card = page.locator('.drv').first();
+  await card.getByLabel('Call sign for driver 1').fill('AB123');
+  await addJob(page, card, 'TS17 0EY', 'NE37 3HT', '', '+ Add job');
+  await expect(card.locator('.jr')).toHaveCount(1);
+  await page.clock.setFixedTime(new Date('2026-11-25T06:30:00Z'));
+  await page.reload();
+  await expect(page.getByLabel('Day', { exact: true })).toHaveValue('2026-11-25');
+  await expect(card.getByLabel('Call sign for driver 1')).toHaveValue('AB123');
+  await expect(card.locator('.jr')).toHaveCount(0);
+  await expect(page.getByText("New day. Your drivers are kept; last run's job was cleared.")).toBeVisible();
+  await shot(page, '57-new-day-lift');
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(card.locator('.jr')).toHaveCount(1);
+});
+
 test('leave now sets the day and time to right now, for both drivers', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-11-21T13:56:20Z'));
   for (const role of ['Plate driver', 'Lift driver'] as const) {
